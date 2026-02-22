@@ -20,11 +20,11 @@ set -euo pipefail
 # --- Configuration (edit these) ---
 
 # Paper jar filename
-PAPER_JAR="server.jar"
+PAPER_JAR="paper.jar"
 
 # Memory allocation
-MIN_MEMORY="1G"
-MAX_MEMORY="3G"
+MIN_MEMORY="2G"
+MAX_MEMORY="4G"
 
 # mc-dual-proxy multiauth address
 # Change this if your multiauth server is on another host or behind Caddy
@@ -59,8 +59,14 @@ AIKAR_FLAGS=(
     -Daikars.new.flags=true
 )
 
-# Session server override — points Paper at mc-dual-proxy's multiauth server
-# Paper appends /session/minecraft/hasJoined to this base URL automatically
+# Mojang API host overrides
+#
+# IMPORTANT: Paper requires ALL THREE of session.host, services.host, and
+# profiles.host to be set, or it silently ignores them all with:
+#   "Ignoring hosts properties. All need to be set: [...]"
+#
+# Only session.host points at mc-dual-proxy's multiauth server.
+# The rest must be set to their standard Mojang URLs.
 SESSION_FLAGS=(
     -Dminecraft.api.auth.host="https://authserver.mojang.com/"
     -Dminecraft.api.account.host="https://api.mojang.com/"
@@ -68,6 +74,7 @@ SESSION_FLAGS=(
     -Dminecraft.api.profiles.host="https://api.mojang.com/"
     -Dminecraft.api.session.host="${MULTIAUTH_HOST}"
 )
+
 # --- Startup ---
 
 echo "Starting Paper server on port ${SERVER_PORT}..."

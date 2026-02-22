@@ -120,22 +120,55 @@ In `server.properties`:
 
 ```properties
 enforce-secure-profile=false
+server-port=25566
 ```
 
 JVM flags:
 
 ```bash
-java -Dminecraft.api.session.host=http://127.0.0.1:8652 \
-     -jar paper.jar
+java \
+  -Dminecraft.api.auth.host=https://authserver.mojang.com/ \
+  -Dminecraft.api.account.host=https://api.mojang.com/ \
+  -Dminecraft.api.services.host=https://api.minecraftservices.com/ \
+  -Dminecraft.api.profiles.host=https://api.mojang.com/ \
+  -Dminecraft.api.session.host=http://127.0.0.1:8652 \
+  -jar paper.jar --nogui
 ```
+
+> **⚠️ Important:** Paper requires `session.host`, `services.host`, AND
+> `profiles.host` to all be set, or it silently ignores them all. You will see
+> this in the server log if any are missing:
+>
+> ```plain
+> Ignoring hosts properties. All need to be set: [minecraft.api.services.host, minecraft.api.session.host, minecraft.api.profiles.host]
+> ```
+>
+> Only `session.host` points at mc-dual-proxy — the rest must be set to their
+> standard Mojang URLs.
 
 ## Minehut Panel Configuration
 
 1. Set your external server IP to your **public IP** (where mc-dual-proxy listens)
 2. Set the port to `25565` (or whatever you configured with `-listen`)
-3. Set proxy type to match your backend ("Velocity" or "Other" for Paper)
-4. Set proxy protocol to **disabled** in the Minehut panel (Minehut handles this
-   automatically based on proxy type selection)
+3. Set proxy type to "Other" for standalone Paper (or "Velocity" if using Velocity)
+4. Set DNS record type to "Port"
+5. Leave TCP Shield as "Not Configured"
+
+## Firewall Notes
+
+If you're running on a host with both a cloud firewall and an OS-level firewall
+(e.g., Hetzner), make sure **both** allow TCP on port 25565:
+
+```bash
+# For UFW
+sudo ufw allow 25565/tcp
+
+# For raw iptables
+sudo iptables -I INPUT -p tcp --dport 25565 -j ACCEPT
+```
+
+You do **not** need to expose port 25566 (backend) or 8652 (multiauth) — those
+only need to be reachable from localhost.
 
 ## Exposing Multiauth via Caddy (Optional)
 
@@ -152,8 +185,10 @@ auth.yourdomain.com {
 Then configure your backend with:
 
 ```bash
--Dmojang.sessionserver=https://auth.yourdomain.com/session/minecraft/hasJoined
+-Dminecraft.api.session.host=https://auth.yourdomain.com
 ```
+
+(keeping the other `-D` flags pointed at Mojang as shown above)
 
 ## Adding More Session Servers
 

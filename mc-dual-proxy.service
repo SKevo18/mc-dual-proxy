@@ -1,0 +1,26 @@
+[Unit]
+Description=Minecraft Dual Proxy (TCP + Multiauth)
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=minecraft
+Group=minecraft
+
+ExecStart=/usr/local/bin/mc-dual-proxy \
+  -listen 0.0.0.0:25565 \
+  -backend 127.0.0.1:25566 \
+  -auth-listen 127.0.0.1:8652 \
+  -session-servers "https://sessionserver.mojang.com,https://api.minehut.com/mitm/proxy"
+
+Restart=always
+RestartSec=5
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
